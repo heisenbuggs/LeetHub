@@ -1,28 +1,44 @@
 class Foo {
 public:
-    std::atomic<int> a = 0;
+    int count = 0;
+    mutex mtx;
+    condition_variable cv;
     Foo() {
-        
+        count = 0;
+        // cv.notify_all();
     }
 
     void first(function<void()> printFirst) {
         
+        unique_lock<mutex> lck(mtx);
+		// No point of this wait as on start count will be 1, we need to make the other threads wait.
+        // while(count != 1){
+        //     cv.wait(lck);
+        // }
         // printFirst() outputs "first". Do not change or remove this line.
+
         printFirst();
-        a++;
+        count = 1;
+        cv.notify_all();
     }
 
     void second(function<void()> printSecond) {
-        while(a!=1);
+        unique_lock<mutex> lck(mtx);
+        while(count != 1){
+            cv.wait(lck);
+        }
         // printSecond() outputs "second". Do not change or remove this line.
         printSecond();
-        a++;
+        count = 2;
+        cv.notify_all();
     }
 
     void third(function<void()> printThird) {
-        while(a!=2);
+        unique_lock<mutex> lck(mtx);
+        while(count != 2){
+            cv.wait(lck);
+        }
         // printThird() outputs "third". Do not change or remove this line.
         printThird();
-        a++;
     }
 };
